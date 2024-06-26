@@ -219,38 +219,7 @@ namespace wmi_wrapper
     {
 
         HRESULT hres;
-
-        // Initialize COM.
-        hres = CoInitializeEx(0, COINIT_MULTITHREADED);
         {
-            if (FAILED(hres))
-            {
-                // Failed to initialize COM library
-                return hres;
-            }
-
-            // Initialize security
-            hres = CoInitializeSecurity(
-                NULL,
-                -1,                          // COM authentication
-                NULL,                        // Authentication services
-                NULL,                        // Reserved
-                RPC_C_AUTHN_LEVEL_DEFAULT,   // Default authentication
-                RPC_C_IMP_LEVEL_IMPERSONATE, // Default Impersonation
-                NULL,                        // Authentication info
-                EOAC_NONE,                   // Additional capabilities
-                NULL                         // Reserved
-            );
-
-            // RCP_E_TOO_LATE = CoInitializeSecurity has already been called by
-            // the same process, in which case will continue to create instance.
-            if (FAILED(hres) && hres != RPC_E_TOO_LATE)
-            {
-                // Failed to initialize security
-                CoUninitialize();
-                return hres;
-            }
-
             // Obtain the initial locator to WMI
             IWbemLocator *locator = NULL;
 
@@ -264,7 +233,6 @@ namespace wmi_wrapper
             if (FAILED(hres))
             {
                 // Failed to create IWbemLocator object.
-                CoUninitialize();
                 return hres;
             }
 
@@ -288,7 +256,6 @@ namespace wmi_wrapper
             {
                 // Could not connect.
                 locator->Release();
-                CoUninitialize();
             }
 
             // Set security levels on the proxy
@@ -308,7 +275,6 @@ namespace wmi_wrapper
                 // Could not set proxy blanket.
                 service->Release();
                 locator->Release();
-                CoUninitialize();
             }
 
             // Use the IWbemServices pointer to make requests of WMI
@@ -318,8 +284,6 @@ namespace wmi_wrapper
             service->Release();
             locator->Release();
         }
-
-        CoUninitialize();
 
         // return status;
         return ERROR_SUCCESS;
